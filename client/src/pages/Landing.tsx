@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
 	Truck,
@@ -7,12 +7,15 @@ import {
 	Cpu,
 	AlertOctagon,
 	Terminal as TerminalIcon,
+	Menu,
+	X,
 } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
 
 const Landing: React.FC = () => {
 	const { user } = useAuth();
 	const navigate = useNavigate();
+	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
 	const handleCtaClick = () => {
 		if (user) {
@@ -38,47 +41,96 @@ const Landing: React.FC = () => {
 			<div className='absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-accent-purple/5 blur-[120px] pointer-events-none' />
 
 			{/* Header Navigation */}
-			<header className='sticky top-0 z-50 h-16 border-b border-border bg-surface/85 backdrop-blur-md w-full'>
-				<div className='max-w-6xl mx-auto px-6 h-full flex items-center justify-between'>
-					<div className='flex items-center gap-3'>
-						<div className='w-8 h-8 bg-primary rounded-lg flex items-center justify-center'>
+			<header className='sticky top-0 z-50 w-full bg-transparent px-4 py-3'>
+				<div className='max-w-6xl mx-auto h-14 bg-surface/75 backdrop-blur-md border border-border/60 hover:border-primary/20 transition-colors duration-300 rounded-full px-6 flex items-center justify-between shadow-xl shadow-canvas/40 relative z-50'>
+					<div className='flex items-center gap-2.5 group cursor-pointer' onClick={() => navigate("/")}>
+						<div className='w-7 h-7 bg-gradient-to-br from-primary to-amber-500 rounded-full flex items-center justify-center shadow shadow-primary/25 group-hover:shadow-primary/45 group-hover:scale-105 transition-all duration-300'>
 							<Truck
 								className='text-canvas animate-pulse'
-								size={18}
+								size={13}
 							/>
 						</div>
-						<span className='font-display font-bold text-xl text-text-primary tracking-tight'>
-							TransportFlow
+						<span className='font-display font-extrabold text-xs md:text-sm tracking-[0.25em] text-text-primary uppercase group-hover:text-primary transition-colors duration-200'>
+							Transport<span className='text-primary'>Flow</span>
 						</span>
 					</div>
 
-					<nav className='hidden md:flex items-center gap-8 text-sm font-semibold text-text-secondary'>
+					<nav className='hidden md:flex items-center gap-2 text-xs font-semibold'>
 						<a
 							href='#features'
-							className='hover:text-text-primary transition-colors'>
+							className='text-text-primary/70 hover:text-text-primary px-4 py-1.5 rounded-full hover:bg-elevated/70 text-[11px] tracking-[0.22em] font-bold uppercase transition-all duration-300'>
 							Features
 						</a>
 						<a
 							href='#architecture'
-							className='hover:text-text-primary transition-colors'>
+							className='text-text-primary/70 hover:text-text-primary px-4 py-1.5 rounded-full hover:bg-elevated/70 text-[11px] tracking-[0.22em] font-bold uppercase transition-all duration-300'>
 							Architecture
 						</a>
 						<a
 							href='#diagnostics'
-							className='hover:text-text-primary transition-colors'>
+							className='text-text-primary/70 hover:text-text-primary px-4 py-1.5 rounded-full hover:bg-elevated/70 text-[11px] tracking-[0.22em] font-bold uppercase transition-all duration-300'>
 							Diagnostics
 						</a>
 					</nav>
 
+					<div className='hidden md:flex items-center'>
+						<button
+							onClick={handleCtaClick}
+							id='header-cta'
+							className='flex items-center gap-2 border border-primary/40 bg-primary-muted/20 hover:bg-primary-muted/40 hover:border-primary text-primary hover:text-primary-hover text-[11px] tracking-[0.18em] font-bold px-4 py-2.5 rounded-full transition-all duration-200 active:scale-95 cursor-pointer group'>
+							<TerminalIcon size={12} className='opacity-80 group-hover:scale-110 transition-transform duration-200' />
+							{user ? "DASHBOARD" : "SIGN IN"}
+						</button>
+					</div>
+
+					{/* Mobile Menu Toggle */}
 					<button
-						onClick={handleCtaClick}
-						id='header-cta'
-						className='flex items-center gap-2 bg-primary hover:bg-primary-hover text-canvas text-xs font-bold px-4 py-2 rounded-lg transition-colors duration-150 active:scale-95 cursor-pointer'>
-						{user ? "Console Dashboard" : "Console Sign In"}{" "}
-						<ArrowRight size={13} />
+						onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+						className='md:hidden p-2 text-text-secondary hover:text-text-primary hover:bg-surface/50 rounded-full transition-colors cursor-pointer'
+						aria-label='Toggle menu'>
+						{mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
 					</button>
 				</div>
 			</header>
+
+			{/* Mobile Navigation Drawer */}
+			<div
+				className={`fixed inset-x-4 top-20 z-40 md:hidden bg-surface/95 backdrop-blur-xl border border-border/80 rounded-3xl transition-all duration-300 ease-in-out origin-top shadow-2xl ${
+					mobileMenuOpen
+						? "opacity-100 scale-y-100 pointer-events-auto"
+						: "opacity-0 scale-y-0 pointer-events-none"
+				}`}>
+				<nav className='flex flex-col p-6 gap-4 font-bold text-[11px] tracking-[0.22em] uppercase'>
+					<a
+						href='#features'
+						onClick={() => setMobileMenuOpen(false)}
+						className='text-text-primary/70 hover:text-text-primary py-3 border-b border-border/40 hover:pl-2 transition-all duration-200'>
+						Features
+					</a>
+					<a
+						href='#architecture'
+						onClick={() => setMobileMenuOpen(false)}
+						className='text-text-primary/70 hover:text-text-primary py-3 border-b border-border/40 hover:pl-2 transition-all duration-200'>
+						Architecture
+					</a>
+					<a
+						href='#diagnostics'
+						onClick={() => setMobileMenuOpen(false)}
+						className='text-text-primary/70 hover:text-text-primary py-3 border-b border-border/40 hover:pl-2 transition-all duration-200'>
+						Diagnostics
+					</a>
+					
+					<button
+						onClick={() => {
+							setMobileMenuOpen(false);
+							handleCtaClick();
+						}}
+						className='w-full mt-2 flex items-center justify-center gap-2 border border-primary/40 bg-primary-muted/20 hover:bg-primary-muted/40 hover:border-primary text-primary text-[11px] tracking-[0.18em] font-bold py-3.5 rounded-full shadow-lg shadow-primary/10 active:scale-95 transition-all cursor-pointer'>
+						<TerminalIcon size={12} />
+						{user ? "DASHBOARD" : "SIGN IN"}
+					</button>
+				</nav>
+			</div>
 
 			{/* Hero Section */}
 			<main className='relative z-10 max-w-6xl mx-auto px-6 py-20 flex-1 flex flex-col items-center text-center'>
@@ -117,7 +169,7 @@ const Landing: React.FC = () => {
 				{/* Live Stat Tickers */}
 				<div
 					id='architecture'
-					className='grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-24 border-t border-b border-border py-8 scroll-mt-20'>
+					className='grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-24 border-t border-b border-border py-8 scroll-mt-24'>
 					<div>
 						<p className='font-display font-bold text-4xl text-text-primary tabular-nums tracking-tight'>
 							+38.4%
@@ -147,7 +199,7 @@ const Landing: React.FC = () => {
 				{/* Interactive Modules Section */}
 				<div
 					id='features'
-					className='w-full mt-32 scroll-mt-20 text-left space-y-12'>
+					className='w-full mt-32 scroll-mt-24 text-left space-y-12'>
 					<div className='text-center md:text-left'>
 						<h2 className='font-display font-semibold text-3xl text-text-primary tracking-tight'>
 							Industrial Blueprint Modules
@@ -288,7 +340,7 @@ const Landing: React.FC = () => {
 				{/* Diagnostics Console Panel */}
 				<div
 					id='diagnostics'
-					className='w-full mt-32 scroll-mt-20 text-left space-y-6'>
+					className='w-full mt-32 scroll-mt-24 text-left space-y-6'>
 					<div className='text-center md:text-left'>
 						<h2 className='font-display font-semibold text-3xl text-text-primary tracking-tight'>
 							Diagnostics CLI Simulator
