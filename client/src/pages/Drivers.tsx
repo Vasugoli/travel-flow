@@ -4,7 +4,7 @@ import api from '@/utils/api';
 import useAuth from '@/hooks/useAuth';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
-import Badge from '@/components/ui/badge';
+import StatusBadge from '@/components/ui/StatusBadge';
 import Table from '@/components/ui/table';
 import Dialog from '@/components/ui/dialog';
 import Select from '@/components/ui/select';
@@ -126,7 +126,7 @@ const Drivers: React.FC = () => {
       }
       setIsModalOpen(false);
       fetchDriversAndVehicles();
-    } catch (err) {
+    } catch {
       alert('Error saving driver profile.');
     }
   };
@@ -136,7 +136,7 @@ const Drivers: React.FC = () => {
       try {
         await api.delete(`/drivers/${id}`);
         fetchDriversAndVehicles();
-      } catch (err) {
+      } catch {
         alert('Failed to delete driver.');
       }
     }
@@ -145,109 +145,121 @@ const Drivers: React.FC = () => {
   const isExchangingAllowed = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
   return (
-    <div className="space-y-6">
-      {/* Filtering and Actions Headers */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-40 h-9 text-xs">
-          <option value="">All Statuses</option>
-          <option value="available">Available</option>
-          <option value="on-trip">On-Trip</option>
-          <option value="off-duty">Off-Duty</option>
-          <option value="suspended">Suspended</option>
-        </Select>
-
+    <div className="flex flex-col gap-5">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="font-display font-bold text-3xl text-text-primary">Drivers</h1>
+          <span className="bg-primary-muted text-primary text-xs font-bold px-2.5 py-1 rounded-full font-mono">
+            {drivers.length}
+          </span>
+        </div>
         {isExchangingAllowed && (
           <Button onClick={openAddModal} className="h-9 gap-1.5 text-xs">
-            <Plus className="h-4 w-4" /> Add New Driver
+            <Plus className="h-4 w-4" /> Add Driver
           </Button>
         )}
       </div>
 
-      {loading ? (
-        <div className="flex h-48 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+      {/* Table Wrapper Card with filter bar */}
+      <div className="bg-surface border border-border rounded-xl overflow-hidden flex flex-col">
+        {/* Table header bar (search + actions) */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-elevated/20">
+          <div className="flex items-center gap-3">
+            <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-44 text-xs h-9">
+              <option value="">All Statuses</option>
+              <option value="available">Available</option>
+              <option value="on-trip">On Trip</option>
+              <option value="off-duty">Off Duty</option>
+              <option value="suspended">Suspended</option>
+            </Select>
+          </div>
         </div>
-      ) : (
-        <Table>
-          <Table.Header>
-            <Table.Row>
-              <Table.Head>Driver Name</Table.Head>
-              <Table.Head>License Number</Table.Head>
-              <Table.Head>License Type</Table.Head>
-              <Table.Head>Experience</Table.Head>
-              <Table.Head>Rating</Table.Head>
-              <Table.Head>Status</Table.Head>
-              <Table.Head>Vehicle</Table.Head>
-              {isExchangingAllowed && <Table.Head className="text-right">Actions</Table.Head>}
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {drivers.map((d) => (
-              <Table.Row key={d._id}>
-                <Table.Cell className="font-bold text-gray-900 dark:text-white">{d.name}</Table.Cell>
-                <Table.Cell className="font-semibold">{d.licenseNumber}</Table.Cell>
-                <Table.Cell>{d.licenseType}</Table.Cell>
-                <Table.Cell>{d.experience} Years</Table.Cell>
-                <Table.Cell>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    <span className="font-bold text-xs">{d.rating.toFixed(1)}</span>
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <Badge variant={d.status === 'available' ? 'success' : d.status === 'on-trip' ? 'default' : 'warning'}>
-                    {d.status}
-                  </Badge>
-                </Table.Cell>
-                <Table.Cell className="font-semibold text-gray-800 dark:text-gray-200">
-                  {d.assignedVehicle?.registrationNumber || <span className="text-xs text-gray-400 font-normal">Unassigned</span>}
-                </Table.Cell>
-                {isExchangingAllowed && (
-                  <Table.Cell className="text-right">
-                    <div className="inline-flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditModal(d)} className="h-8 w-8 rounded-lg">
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      {currentUser?.role === 'admin' && (
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(d._id)} className="h-8 w-8 rounded-lg text-red-500 hover:bg-red-500/10">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+
+        {loading ? (
+          <div className="flex h-48 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : (
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.Head>Driver Name</Table.Head>
+                <Table.Head>License Number</Table.Head>
+                <Table.Head>License Type</Table.Head>
+                <Table.Head>Experience</Table.Head>
+                <Table.Head>Rating</Table.Head>
+                <Table.Head>Status</Table.Head>
+                <Table.Head>Vehicle</Table.Head>
+                {isExchangingAllowed && <Table.Head className="text-right">Actions</Table.Head>}
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {drivers.map((d) => (
+                <Table.Row key={d._id}>
+                  <Table.Cell className="text-sm font-medium text-text-primary">{d.name}</Table.Cell>
+                  <Table.Cell className="font-mono text-sm font-medium text-text-secondary">{d.licenseNumber}</Table.Cell>
+                  <Table.Cell className="text-sm text-text-secondary capitalize">{d.licenseType}</Table.Cell>
+                  <Table.Cell className="text-sm text-text-primary tabular-nums">{d.experience} Years</Table.Cell>
+                  <Table.Cell>
+                    <div className="flex items-center gap-1">
+                      <Star size={13} className="fill-warning text-warning" />
+                      <span className="text-xs font-bold text-text-primary tabular-nums">{d.rating.toFixed(1)}</span>
                     </div>
                   </Table.Cell>
-                )}
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
-      )}
+                  <Table.Cell>
+                    <StatusBadge status={d.status} />
+                  </Table.Cell>
+                  <Table.Cell className="font-mono text-sm font-semibold text-text-secondary">
+                    {d.assignedVehicle?.registrationNumber || <span className="text-xs text-text-tertiary font-normal">Unassigned</span>}
+                  </Table.Cell>
+                  {isExchangingAllowed && (
+                    <Table.Cell className="text-right">
+                      <div className="inline-flex gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => openEditModal(d)} className="h-8 w-8 rounded-lg cursor-pointer">
+                          <Edit2 className="h-4 w-4 text-text-secondary group-hover:text-text-primary" />
+                        </Button>
+                        {currentUser?.role === 'admin' && (
+                          <Button variant="destructive" size="icon" onClick={() => handleDelete(d._id)} className="h-8 w-8 rounded-lg cursor-pointer">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </Table.Cell>
+                  )}
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+        )}
+      </div>
 
       {/* Add / Edit dialog modal */}
       <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={isEditMode ? 'Edit Driver Profile' : 'Register New Driver'}>
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Driver Full Name</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Driver Full Name <span className="text-danger">*</span></label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. John Doe" />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Phone Contact</label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Phone Contact <span className="text-danger">*</span></label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="e.g. +91 9876543210" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">License Number</label>
-              <Input value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">License Number <span className="text-danger">*</span></label>
+              <Input value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required placeholder="e.g. DL-123456789" />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">License Expiry</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">License Expiry <span className="text-danger">*</span></label>
               <Input type="date" value={licenseExpiry} onChange={(e) => setLicenseExpiry(e.target.value)} required />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">License Class</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">License Class <span className="text-danger">*</span></label>
               <Select value={licenseType} onChange={(e) => setLicenseType(e.target.value)}>
                 <option value="LMV">LMV</option>
                 <option value="HMV">HMV</option>
@@ -255,47 +267,47 @@ const Drivers: React.FC = () => {
                 <option value="Transport">Transport</option>
               </Select>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Experience (yrs)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Experience (yrs) <span className="text-danger">*</span></label>
               <Input type="number" value={experience} onChange={(e) => setExperience(Number(e.target.value))} required />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Status <span className="text-danger">*</span></label>
               <Select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="available">Available</option>
-                <option value="on-trip">On-Trip</option>
-                <option value="off-duty">Off-Duty</option>
+                <option value="on-trip">On Trip</option>
+                <option value="off-duty">Off Duty</option>
               </Select>
             </div>
           </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Email Address (Optional)</label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-secondary">Email Address (Optional)</label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g. john.doe@transport.com" />
           </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Residential Address</label>
-            <Input value={address} onChange={(e) => setAddress(e.target.value)} required />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-secondary">Residential Address <span className="text-danger">*</span></label>
+            <Input value={address} onChange={(e) => setAddress(e.target.value)} required placeholder="Street address, City" />
           </div>
           {/* Emergency Contact Header */}
-          <div className="border-t border-gray-200/50 pt-3 dark:border-gray-800/50">
-            <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">Emergency Contact Details</h4>
+          <div className="border-t border-border pt-3">
+            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Emergency Contact Details</h4>
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Name</label>
-                <Input value={emergencyContactName} onChange={(e) => setEmergencyContactName(e.target.value)} required />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Name <span className="text-danger">*</span></label>
+                <Input value={emergencyContactName} onChange={(e) => setEmergencyContactName(e.target.value)} required placeholder="Contact Name" />
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Phone</label>
-                <Input value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} required />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Phone <span className="text-danger">*</span></label>
+                <Input value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} required placeholder="Contact Phone" />
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Relation</label>
-                <Input value={emergencyContactRelation} onChange={(e) => setEmergencyContactRelation(e.target.value)} required />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Relation <span className="text-danger">*</span></label>
+                <Input value={emergencyContactRelation} onChange={(e) => setEmergencyContactRelation(e.target.value)} required placeholder="e.g. Spouse" />
               </div>
             </div>
           </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Assign Vehicle</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-secondary">Assign Vehicle</label>
             <Select value={assignedVehicle} onChange={(e) => setAssignedVehicle(e.target.value)}>
               <option value="">No Vehicle Assigned</option>
               {vehicles.map((v) => (
@@ -303,7 +315,7 @@ const Drivers: React.FC = () => {
               ))}
             </Select>
           </div>
-          <Button type="submit" className="w-full mt-4">Save Driver Profile</Button>
+          <Button type="submit" className="w-full mt-4 h-11">Save Driver Profile</Button>
         </form>
       </Dialog>
     </div>

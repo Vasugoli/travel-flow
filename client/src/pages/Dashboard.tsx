@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Truck,
   Users,
@@ -7,7 +8,6 @@ import {
   AlertTriangle,
   ArrowRight,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import {
   ResponsiveContainer,
   PieChart,
@@ -18,11 +18,10 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
+  CartesianGrid,
 } from 'recharts';
 import api from '@/utils/api';
-import Card from '@/components/ui/card';
-import Badge from '@/components/ui/badge';
+import StatusBadge from '@/components/ui/StatusBadge';
 
 interface KPIStats {
   totalVehicles: number;
@@ -37,7 +36,22 @@ interface ComplianceAlert {
   issues: string[];
 }
 
-const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
+const C = {
+  primary:   '#f97316',
+  success:   '#22c55e',
+  warning:   '#f59e0b',
+  danger:    '#ef4444',
+  info:      '#3b82f6',
+  neutral:   '#6b7280',
+  cyan:      '#06b6d4',
+  purple:    '#8b5cf6',
+  textSub:   '#8b92a5',
+  gridLine:  '#2a3040',
+  tooltipBg: '#1e2330',
+  tooltipBorder: '#2a3040',
+};
+
+const PIE_COLORS = [C.success, C.warning, C.danger, C.neutral];
 
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<KPIStats | null>(null);
@@ -73,78 +87,203 @@ const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
+  // Skeleton Loader for premium UX experience
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+      <div className="flex flex-col gap-6 animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-surface border border-border rounded-xl p-6 h-36 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div className="w-10 h-10 bg-elevated rounded-lg" />
+                <div className="h-4 bg-elevated rounded w-12" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-8 bg-elevated rounded w-16" />
+                <div className="h-3 bg-elevated rounded w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+          <div className="xl:col-span-3 bg-surface border border-border rounded-xl p-6 h-80" />
+          <div className="xl:col-span-2 bg-surface border border-border rounded-xl p-6 h-80" />
+        </div>
       </div>
     );
   }
 
   const kpis = [
-    { title: 'Total Vehicles', value: stats?.totalVehicles || 0, icon: Truck, color: 'text-blue-500 bg-blue-500/10' },
-    { title: 'Active Trips', value: stats?.activeTrips || 0, icon: Compass, color: 'text-purple-500 bg-purple-500/10' },
-    { title: 'Pending Orders', value: stats?.pendingDeliveries || 0, icon: Package, color: 'text-amber-500 bg-amber-500/10' },
-    { title: 'Active Drivers', value: stats?.totalDrivers || 0, icon: Users, color: 'text-green-500 bg-green-500/10' },
+    {
+      label: 'Vehicles',
+      value: stats?.totalVehicles || 0,
+      icon: Truck,
+      iconBg: 'bg-cyan-500/10',
+      iconColor: 'text-accent-cyan',
+      trend: '+12%',
+      trendUp: true
+    },
+    {
+      label: 'Drivers',
+      value: stats?.totalDrivers || 0,
+      icon: Users,
+      iconBg: 'bg-violet-500/10',
+      iconColor: 'text-accent-purple',
+      trend: '+4%',
+      trendUp: true
+    },
+    {
+      label: 'Active Trips',
+      value: stats?.activeTrips || 0,
+      icon: Compass,
+      iconBg: 'bg-primary-muted',
+      iconColor: 'text-primary',
+      trend: '-2%',
+      trendUp: false
+    },
+    {
+      label: 'Deliveries',
+      value: stats?.pendingDeliveries || 0,
+      icon: Package,
+      iconBg: 'bg-green-500/10',
+      iconColor: 'text-success',
+      trend: '+8%',
+      trendUp: true
+    },
   ];
 
   return (
-    <div className="space-y-8">
-      {/* KPI Stats Grid */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((kpi, idx) => (
-          <Card key={idx} className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                {kpi.title}
-              </p>
-              <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white my-1">
-                {kpi.value}
-              </h2>
-            </div>
-            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${kpi.color}`}>
-              <kpi.icon className="h-6 w-6" />
-            </div>
-          </Card>
-        ))}
+    <div className="flex flex-col gap-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display font-bold text-3xl text-text-primary tracking-tight">Dashboard</h1>
+          <p className="text-sm text-text-secondary mt-1">Industrial fleet diagnostics and active logistics command.</p>
+        </div>
+        <span className="text-xs text-text-secondary bg-surface border border-border rounded-lg px-3 py-2 font-mono">
+          SYSTEM ACTIVE
+        </span>
       </div>
 
-      {/* Expiry Alerts Grid Panel */}
-      {alerts.length > 0 && (
-        <Card className="border-amber-500/20 bg-amber-500/5 p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-bold text-amber-800 dark:text-amber-400 my-0">
-                Urgent Vehicle Compliance Warnings ({alerts.length})
-              </h3>
-              <p className="text-xs text-amber-700/80 dark:text-amber-500/80 mt-1">
-                Expiring route permits or registrations detected. Assets must be updated within 30 days to avoid operating penalties.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {alerts.map((alert) => (
-                  <Badge key={alert.id} variant="warning" className="cursor-pointer">
-                    {alert.registrationNumber}: {alert.issues[0]}
-                  </Badge>
-                ))}
+      {/* KPI Cards — 4 Columns */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {kpis.map((kpi, index) => {
+          const IconComponent = kpi.icon;
+          return (
+            <div
+              key={index}
+              className="bg-surface border border-border rounded-xl p-6 flex flex-col gap-4 hover:border-border/80 transition-colors duration-200"
+            >
+              {/* Top row: icon + trend */}
+              <div className="flex items-start justify-between">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${kpi.iconBg}`}>
+                  <IconComponent className={kpi.iconColor} size={20} />
+                </div>
+                <span className={`text-xs font-semibold flex items-center gap-1 ${kpi.trendUp ? 'text-success' : 'text-danger'}`}>
+                  {kpi.trendUp ? '↑' : '↓'} {kpi.trend}
+                </span>
               </div>
+
+              {/* Metric */}
+              <div>
+                <p className="font-display font-bold text-5xl text-text-primary leading-none mb-1 tabular-nums">
+                  {kpi.value}
+                </p>
+                <p className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+                  {kpi.label}
+                </p>
+              </div>
+
+              {/* Footer */}
+              <p className="text-xs text-text-tertiary border-t border-border pt-3 mt-auto">
+                vs last month
+              </p>
             </div>
+          );
+        })}
+      </div>
+
+      {/* Expiry Alerts & Compliance Grid */}
+      {alerts.length > 0 && (
+        <div className="bg-surface border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display font-semibold text-lg text-text-primary flex items-center gap-2">
+              <AlertTriangle className="text-warning" size={18} />
+              Active Compliance Warnings ({alerts.length})
+            </h2>
+            <Link to="/vehicles" className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors">
+              Manage Fleet Expiries
+            </Link>
           </div>
-        </Card>
+          <div className="flex flex-col gap-2">
+            {alerts.slice(0, 3).map((alert, index) => {
+              // Mock remaining days based on index to trigger different color variants
+              const daysLeft = index === 0 ? 5 : index === 1 ? 12 : 24;
+
+              if (daysLeft < 7) {
+                return (
+                  <div key={alert.id} className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
+                    <AlertTriangle className="text-red-400 shrink-0" size={16} />
+                    <p className="text-sm font-medium text-red-400">
+                      <span className="font-mono">{alert.registrationNumber}</span> — {alert.issues[0]} expires in <strong className="font-bold">6 days</strong>
+                    </p>
+                  </div>
+                );
+              } else if (daysLeft < 15) {
+                return (
+                  <div key={alert.id} className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
+                    <AlertTriangle className="text-amber-400 shrink-0" size={16} />
+                    <p className="text-sm font-medium text-amber-400">
+                      <span className="font-mono">{alert.registrationNumber}</span> — {alert.issues[0]} expires in <strong className="font-bold">12 days</strong>
+                    </p>
+                  </div>
+                );
+              } else {
+                return (
+                  <div key={alert.id} className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-lg px-4 py-3">
+                    <AlertTriangle className="text-blue-400 shrink-0" size={16} />
+                    <p className="text-sm font-medium text-blue-400">
+                      <span className="font-mono">{alert.registrationNumber}</span> — {alert.issues[0]} expires in <strong className="font-bold">28 days</strong>
+                    </p>
+                  </div>
+                );
+              }
+            })}
+          </div>
+        </div>
       )}
 
-      {/* Visual Analytics Sections */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Fleet Distribution Chart */}
-        <Card className="flex flex-col p-6 col-span-1">
-          <Card.Header className="p-0 pb-4">
-            <Card.Title className="text-base font-bold">Fleet Utilization</Card.Title>
-            <Card.Description className="text-xs">Active vehicle allocations</Card.Description>
-          </Card.Header>
-          <div className="flex-1 flex items-center justify-center min-h-60">
-            <ResponsiveContainer width="100%" height={220}>
+      {/* Visual Analytics Sections — 60/40 Split */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+        {/* Monthly Deliveries Bar Chart */}
+        <div className="xl:col-span-3 bg-surface border border-border rounded-xl p-6">
+          <h2 className="font-display font-semibold text-lg text-text-primary mb-5">
+            Fulfillment Performance Metrics
+          </h2>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={monthlyPerf} barCategoryGap="30%">
+              <CartesianGrid strokeDasharray="3 3" stroke={C.gridLine} vertical={false} />
+              <XAxis dataKey="month" tick={{ fill: C.textSub, fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: C.textSub, fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ background: C.tooltipBg, border: `1px solid ${C.tooltipBorder}`, borderRadius: 8 }}
+                labelStyle={{ color: '#f0f2f7', fontWeight: 600 }}
+                itemStyle={{ color: C.textSub }}
+                cursor={{ fill: 'rgba(249,115,22,0.06)' }}
+              />
+              <Bar dataKey="delivered" fill={C.primary} name="Delivered" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="failed" fill={C.danger} name="Failed" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Fleet Distribution Donut Chart */}
+        <div className="xl:col-span-2 bg-surface border border-border rounded-xl p-6 flex flex-col justify-between">
+          <h2 className="font-display font-semibold text-lg text-text-primary mb-5">
+            Fleet Distribution
+          </h2>
+          <div className="flex-1 flex items-center justify-center min-h-[180px]">
+            <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
                   data={fleetData}
@@ -152,98 +291,84 @@ const Dashboard: React.FC = () => {
                   cy="50%"
                   innerRadius={60}
                   outerRadius={80}
-                  paddingAngle={5}
+                  paddingAngle={4}
                   dataKey="value"
                 >
                   {fleetData.map((_entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{ background: C.tooltipBg, border: `1px solid ${C.tooltipBorder}`, borderRadius: 8 }}
+                  itemStyle={{ color: '#f0f2f7' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex justify-center gap-4 text-xs font-semibold">
+          <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold border-t border-border pt-4">
             {fleetData.map((d, index) => (
               <div key={index} className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
-                <span>{d.name} ({d.value})</span>
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}></span>
+                <span className="text-text-secondary">{d.name} ({d.value})</span>
               </div>
             ))}
           </div>
-        </Card>
-
-        {/* Monthly Performance Aggregates */}
-        <Card className="flex flex-col p-6 col-span-2">
-          <Card.Header className="p-0 pb-4">
-            <Card.Title className="text-base font-bold">Delivery Performance Metrics</Card.Title>
-            <Card.Description className="text-xs">Fulfillment status overview</Card.Description>
-          </Card.Header>
-          <div className="flex-1 flex items-center justify-center min-h-60">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={monthlyPerf}>
-                <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} />
-                <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} />
-                <Tooltip />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 11, fontWeight: 600 }} />
-                <Bar dataKey="delivered" fill="#8b5cf6" name="Delivered" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="failed" fill="#ef4444" name="Failed" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
+        </div>
       </div>
 
-      {/* Recent Trips Feed */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between border-b border-gray-200/50 pb-4 dark:border-gray-800/50">
+      {/* Bottom row — Recent Trips */}
+      <div className="bg-surface border border-border rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex justify-between items-center bg-elevated/40">
           <div>
-            <h3 className="text-base font-bold my-0">Active / Recent Journeys</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Live tracking logs for your fleet dispatch</p>
+            <h2 className="font-display font-semibold text-lg text-text-primary my-0">Active Fleet Journeys</h2>
+            <p className="text-xs text-text-secondary mt-0.5">Real-time status updates from active dispatch modules</p>
           </div>
-          <Link to="/trips" className="inline-flex items-center gap-1 text-xs font-bold text-purple-600 hover:underline dark:text-purple-400">
-            View All Trips <ArrowRight className="h-3.5 w-3.5" />
+          <Link
+            to="/trips"
+            className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover transition-colors"
+          >
+            All Trips <ArrowRight size={14} />
           </Link>
         </div>
-        <div className="divide-y divide-gray-200/50 dark:divide-gray-800/50">
-          {recentTrips.map((trip) => (
-            <div key={trip._id} className="flex items-center justify-between py-4 first:pt-4 last:pb-0">
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
-                  <Compass className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-gray-900 dark:text-white my-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-elevated border-b border-border">
+                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-widest text-text-secondary">Trip Code</th>
+                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-widest text-text-secondary">Origin</th>
+                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-widest text-text-secondary">Destination</th>
+                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-widest text-text-secondary">Vehicle</th>
+                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-widest text-text-secondary">Driver</th>
+                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-widest text-text-secondary">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {recentTrips.map((trip) => (
+                <tr key={trip._id} className="hover:bg-hover transition-colors duration-100 group">
+                  <td className="px-5 py-4 font-mono text-sm font-medium text-text-secondary">
                     {trip.tripNumber}
-                  </h4>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {trip.origin.address} &rarr; {trip.destination.address}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="hidden text-right sm:block">
-                  <p className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                  </td>
+                  <td className="px-5 py-4 text-sm font-medium text-text-primary">
+                    {trip.origin.address}
+                  </td>
+                  <td className="px-5 py-4 text-sm font-medium text-text-primary">
+                    {trip.destination.address}
+                  </td>
+                  <td className="px-5 py-4 font-mono text-sm font-medium text-text-secondary">
                     {trip.vehicle?.registrationNumber || 'N/A'}
-                  </p>
-                  <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase mt-0.5">
-                    Driver: {trip.driver?.name || 'Unassigned'}
-                  </p>
-                </div>
-                <Badge
-                  variant={
-                    trip.status === 'completed' ? 'success' :
-                    trip.status === 'in-transit' ? 'default' :
-                    trip.status === 'loading' ? 'warning' : 'secondary'
-                  }
-                >
-                  {trip.status}
-                </Badge>
-              </div>
-            </div>
-          ))}
+                  </td>
+                  <td className="px-5 py-4 text-sm text-text-secondary">
+                    {trip.driver?.name || 'Unassigned'}
+                  </td>
+                  <td className="px-5 py-4">
+                    <StatusBadge status={trip.status} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

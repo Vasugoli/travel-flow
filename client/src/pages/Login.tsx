@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Truck, Key, Mail, Lock } from 'lucide-react';
+import { Truck } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
-import Card from '@/components/ui/card';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
@@ -18,7 +15,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Please fill in all fields');
+      setError('Please fill in all fields.');
       return;
     }
 
@@ -29,117 +26,116 @@ const Login: React.FC = () => {
       await login(email, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Invalid credentials');
+      setError(err.message || 'Invalid credentials.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50/30 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      {/* Visual Branding Section (Left) */}
-      <div className="relative hidden w-1/2 overflow-hidden bg-gradient-to-tr from-purple-700 via-indigo-800 to-indigo-950 lg:block">
-        {/* Abstract Floating Orbs */}
-        <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl"></div>
-        <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl"></div>
+    <div className="min-h-screen bg-canvas flex text-text-primary">
+      {/* Left brand panel */}
+      <div className="hidden lg:flex flex-1 flex-col justify-between p-12 bg-surface border-r border-border relative overflow-hidden">
+        {/* Blueprint dot grid background */}
+        <div
+          className="absolute inset-0 opacity-40"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #f97316 1px, transparent 1px)',
+            backgroundSize: '32px 32px'
+          }}
+        />
 
-        {/* Content Overlay */}
-        <div className="relative flex h-full flex-col justify-between p-12 text-white">
-          <div className="flex items-center gap-2">
-            <Truck className="h-6 w-6" />
-            <span className="text-xl font-bold tracking-tight">TransportFlow</span>
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-16">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+              <Truck className="text-canvas" size={22} />
+            </div>
+            <span className="font-display font-bold text-2xl text-text-primary">
+              TransportFlow
+            </span>
           </div>
-
-          <div className="space-y-6">
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-white my-0">
-              Streamline Your <br />
-              Logistics Pipeline.
-            </h1>
-            <p className="max-w-md text-sm leading-relaxed text-gray-300">
-              A comprehensive transport fleet, driver, trip, and compliance scheduling engine for advanced manufacturing.
-            </p>
-          </div>
-
-          <div className="text-xs text-gray-400">
-            &copy; 2026 TransportFlow. Built with ❤️ using React 19 & Express 5.
-          </div>
+          <h2 className="font-display font-bold text-5xl text-text-primary leading-tight mb-4">
+            Logistics<br />Command<br />Centre
+          </h2>
+          <p className="text-text-secondary text-base max-w-xs leading-relaxed">
+            Full-stack transport management for manufacturing operations.
+            Track every vehicle, driver, and delivery in real time.
+          </p>
         </div>
+
+        <p className="relative z-10 text-xs text-text-tertiary">
+          © 2026 TransportFlow. All rights reserved.
+        </p>
       </div>
 
-      {/* Form Credentials Section (Right) */}
-      <div className="flex w-full items-center justify-center p-8 lg:w-1/2">
-        <Card className="w-full max-w-md bg-white/70 dark:bg-gray-900/60 shadow-xl border-none">
-          <Card.Header className="space-y-1 text-center p-6 pb-2">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 shadow-sm">
-              <Shield className="h-6 w-6" />
+      {/* Right login panel */}
+      <div className="flex-1 lg:max-w-md flex items-center justify-center p-8">
+        <div className="w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2 mb-8 lg:hidden">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Truck className="text-canvas" size={16} />
             </div>
-            <Card.Title className="text-2xl font-bold tracking-tight my-0">Welcome Back</Card.Title>
-            <Card.Description className="text-xs">
-              Enter your credentials to access the transport console.
-            </Card.Description>
-          </Card.Header>
+            <span className="font-display font-bold text-xl text-text-primary">TransportFlow</span>
+          </div>
 
-          <Card.Content className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="rounded-xl border border-red-500/10 bg-red-500/5 p-3 text-center text-xs font-semibold text-red-600 dark:text-red-400">
-                  {error}
-                </div>
-              )}
+          <h1 className="font-display font-bold text-3xl text-text-primary mb-1">Welcome back</h1>
+          <p className="text-sm text-text-secondary mb-8">Sign in to your account</p>
 
-              {/* Email Input */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Corporate Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    type="email"
-                    placeholder="name@transport.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-11"
-                  />
-                </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {error && (
+              <div className="rounded-lg border border-danger/25 bg-danger/10 p-3 text-center text-xs font-semibold text-danger">
+                {error}
               </div>
+            )}
 
-              {/* Password Input */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Access Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 h-11"
-                  />
-                </div>
-              </div>
-
-              {/* Log In Trigger */}
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="w-full h-11 font-bold mt-2"
-              >
-                {submitting ? 'Authenticating...' : 'Sign In to Console'}
-              </Button>
-            </form>
-
-            {/* Quick Login Guide */}
-            <div className="mt-6 border-t border-gray-200/50 pt-4 text-center dark:border-gray-800/50">
-              <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                <Key className="h-3.5 w-3.5" />
-                <span>Demo Accounts: <b>admin@transport.com</b> / <b>admin123</b></span>
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Email</label>
+              <input
+                type="email"
+                required
+                className="w-full bg-elevated border border-border rounded-lg px-4 py-2.5
+                           text-base text-text-primary placeholder:text-text-tertiary
+                           focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20
+                           transition-all duration-150"
+                placeholder="admin@transport.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
-          </Card.Content>
-        </Card>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Password</label>
+              <input
+                type="password"
+                required
+                className="w-full bg-elevated border border-border rounded-lg px-4 py-2.5
+                           text-base text-text-primary placeholder:text-text-tertiary
+                           focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20
+                           transition-all duration-150"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full bg-primary hover:bg-primary-hover text-canvas font-semibold
+                         py-3 rounded-lg text-base transition-colors duration-150 active:scale-[0.98] mt-2 cursor-pointer disabled:opacity-50"
+            >
+              {submitting ? 'Signing In...' : 'Sign In'}
+            </button>
+          </form>
+
+          {/* Quick Demo Helper */}
+          <div className="mt-8 border-t border-border pt-4 text-center">
+            <p className="text-xs text-text-tertiary">
+              Demo Account: <span className="font-mono text-text-secondary">admin@transport.com</span> / <span className="font-mono text-text-secondary">admin123</span>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

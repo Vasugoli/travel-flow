@@ -5,20 +5,20 @@ import Navbar from '@/components/layout/Navbar';
 
 const MainLayout: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50/50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+    <div className="flex min-h-screen bg-canvas text-text-primary">
       {/* Fixed Sidebar navigation */}
       <Sidebar />
 
       {/* Main Shifted Wrapper */}
-      <div className="pl-64 flex flex-col min-h-screen transition-all duration-300">
+      <main className="ml-60 flex-1 flex flex-col min-h-screen">
         {/* Sticky top header navbar */}
         <Navbar />
 
         {/* Dynamic Route Content */}
-        <main className="flex-1 p-8 overflow-y-auto">
+        <div className="flex-1 p-6">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

@@ -4,7 +4,7 @@ import api from '@/utils/api';
 import useAuth from '@/hooks/useAuth';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
-import Badge from '@/components/ui/badge';
+import StatusBadge from '@/components/ui/StatusBadge';
 import Table from '@/components/ui/table';
 import Dialog from '@/components/ui/dialog';
 import Select from '@/components/ui/select';
@@ -125,7 +125,7 @@ const Vehicles: React.FC = () => {
       }
       setIsModalOpen(false);
       fetchVehiclesAndDrivers();
-    } catch (err) {
+    } catch {
       alert('Error saving vehicle records.');
     }
   };
@@ -135,7 +135,7 @@ const Vehicles: React.FC = () => {
       try {
         await api.delete(`/vehicles/${id}`);
         fetchVehiclesAndDrivers();
-      } catch (err) {
+      } catch {
         alert('Failed to delete vehicle.');
       }
     }
@@ -144,98 +144,108 @@ const Vehicles: React.FC = () => {
   const isExchangingAllowed = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
   return (
-    <div className="space-y-6">
-      {/* Filtering and Actions Headers */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-3">
-          <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-40 h-9 text-xs">
-            <option value="">All Vehicle Types</option>
-            <option value="truck">Truck</option>
-            <option value="van">Van</option>
-            <option value="trailer">Trailer</option>
-            <option value="pickup">Pickup</option>
-            <option value="container">Container</option>
-          </Select>
-
-          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-40 h-9 text-xs">
-            <option value="">All Statuses</option>
-            <option value="available">Available</option>
-            <option value="in-transit">In-Transit</option>
-            <option value="maintenance">Maintenance</option>
-          </Select>
+    <div className="flex flex-col gap-5">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="font-display font-bold text-3xl text-text-primary">Vehicles</h1>
+          <span className="bg-primary-muted text-primary text-xs font-bold px-2.5 py-1 rounded-full font-mono">
+            {vehicles.length}
+          </span>
         </div>
-
         {isExchangingAllowed && (
           <Button onClick={openAddModal} className="h-9 gap-1.5 text-xs">
-            <Plus className="h-4 w-4" /> Add New Vehicle
+            <Plus className="h-4 w-4" /> Add Vehicle
           </Button>
         )}
       </div>
 
-      {loading ? (
-        <div className="flex h-48 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+      {/* Table Wrapper Card with filter bar */}
+      <div className="bg-surface border border-border rounded-xl overflow-hidden flex flex-col">
+        {/* Table header bar (search + actions) */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-elevated/20">
+          <div className="flex items-center gap-3">
+            <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-44 text-xs h-9">
+              <option value="">All Vehicle Types</option>
+              <option value="truck">Truck</option>
+              <option value="van">Van</option>
+              <option value="trailer">Trailer</option>
+              <option value="pickup">Pickup</option>
+              <option value="container">Container</option>
+            </Select>
+
+            <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-40 text-xs h-9">
+              <option value="">All Statuses</option>
+              <option value="available">Available</option>
+              <option value="in-transit">In Transit</option>
+              <option value="maintenance">Maintenance</option>
+            </Select>
+          </div>
         </div>
-      ) : (
-        <Table>
-          <Table.Header>
-            <Table.Row>
-              <Table.Head>Registration</Table.Head>
-              <Table.Head>Type</Table.Head>
-              <Table.Head>Make/Model</Table.Head>
-              <Table.Head>Capacity</Table.Head>
-              <Table.Head>Status</Table.Head>
-              <Table.Head>Assigned Driver</Table.Head>
-              {isExchangingAllowed && <Table.Head className="text-right">Actions</Table.Head>}
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {vehicles.map((v) => (
-              <Table.Row key={v._id}>
-                <Table.Cell className="font-bold tracking-wide text-gray-900 dark:text-white">
-                  {v.registrationNumber}
-                </Table.Cell>
-                <Table.Cell className="capitalize">{v.type}</Table.Cell>
-                <Table.Cell>{v.make} {v.model} ({v.year})</Table.Cell>
-                <Table.Cell>{v.capacity.value} {v.capacity.unit}</Table.Cell>
-                <Table.Cell>
-                  <Badge variant={v.status === 'available' ? 'success' : v.status === 'in-transit' ? 'default' : 'warning'}>
-                    {v.status}
-                  </Badge>
-                </Table.Cell>
-                <Table.Cell className="font-semibold text-gray-800 dark:text-gray-200">
-                  {v.assignedDriver?.name || <span className="text-xs text-gray-400 font-normal">Unassigned</span>}
-                </Table.Cell>
-                {isExchangingAllowed && (
-                  <Table.Cell className="text-right">
-                    <div className="inline-flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditModal(v)} className="h-8 w-8 rounded-lg">
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      {currentUser?.role === 'admin' && (
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(v._id)} className="h-8 w-8 rounded-lg text-red-500 hover:bg-red-500/10">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </Table.Cell>
-                )}
+
+        {loading ? (
+          <div className="flex h-48 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : (
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.Head>Reg. Number</Table.Head>
+                <Table.Head>Type</Table.Head>
+                <Table.Head>Make / Model</Table.Head>
+                <Table.Head>Capacity</Table.Head>
+                <Table.Head>Status</Table.Head>
+                <Table.Head>Assigned Driver</Table.Head>
+                {isExchangingAllowed && <Table.Head className="text-right">Actions</Table.Head>}
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
-      )}
+            </Table.Header>
+            <Table.Body>
+              {vehicles.map((v) => (
+                <Table.Row key={v._id}>
+                  <Table.Cell className="font-mono text-sm font-medium text-text-secondary">
+                    {v.registrationNumber}
+                  </Table.Cell>
+                  <Table.Cell className="text-sm text-text-secondary capitalize">{v.type}</Table.Cell>
+                  <Table.Cell className="text-sm font-medium text-text-primary">{v.make} {v.model} ({v.year})</Table.Cell>
+                  <Table.Cell className="text-sm text-text-primary tabular-nums">{v.capacity.value} {v.capacity.unit}</Table.Cell>
+                  <Table.Cell>
+                    <StatusBadge status={v.status} />
+                  </Table.Cell>
+                  <Table.Cell className="text-sm font-semibold text-text-primary">
+                    {v.assignedDriver?.name || <span className="text-xs text-text-tertiary font-normal">Unassigned</span>}
+                  </Table.Cell>
+                  {isExchangingAllowed && (
+                    <Table.Cell className="text-right">
+                      <div className="inline-flex gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => openEditModal(v)} className="h-8 w-8 rounded-lg cursor-pointer">
+                          <Edit2 className="h-4 w-4 text-text-secondary group-hover:text-text-primary" />
+                        </Button>
+                        {currentUser?.role === 'admin' && (
+                          <Button variant="destructive" size="icon" onClick={() => handleDelete(v._id)} className="h-8 w-8 rounded-lg cursor-pointer">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </Table.Cell>
+                  )}
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+        )}
+      </div>
 
       {/* Add / Edit dialog modal */}
       <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={isEditMode ? 'Edit Vehicle Records' : 'Register New Fleet Vehicle'}>
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Plates Registration</label>
-              <Input value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Plates Registration <span className="text-danger">*</span></label>
+              <Input value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} required placeholder="e.g. MH12AB3456" />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Vehicle Type</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Vehicle Type <span className="text-danger">*</span></label>
               <Select value={type} onChange={(e) => setType(e.target.value)}>
                 <option value="truck">Truck</option>
                 <option value="van">Van</option>
@@ -246,26 +256,26 @@ const Vehicles: React.FC = () => {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Make Manufacturer</label>
-              <Input value={make} onChange={(e) => setMake(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Make Manufacturer <span className="text-danger">*</span></label>
+              <Input value={make} onChange={(e) => setMake(e.target.value)} required placeholder="e.g. Tata Prima" />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Model Name</label>
-              <Input value={model} onChange={(e) => setModel(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Model Name <span className="text-danger">*</span></label>
+              <Input value={model} onChange={(e) => setModel(e.target.value)} required placeholder="e.g. LPK 2518" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Year</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Year <span className="text-danger">*</span></label>
               <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} required />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Capacity</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Capacity <span className="text-danger">*</span></label>
               <Input type="number" value={capacityVal} onChange={(e) => setCapacityVal(Number(e.target.value))} required />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Unit</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Unit <span className="text-danger">*</span></label>
               <Select value={capacityUnit} onChange={(e) => setCapacityUnit(e.target.value)}>
                 <option value="ton">Tons</option>
                 <option value="kg">kg</option>
@@ -273,8 +283,8 @@ const Vehicles: React.FC = () => {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Fuel Type</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Fuel Type <span className="text-danger">*</span></label>
               <Select value={fuelType} onChange={(e) => setFuelType(e.target.value)}>
                 <option value="diesel">Diesel</option>
                 <option value="petrol">Petrol</option>
@@ -282,35 +292,35 @@ const Vehicles: React.FC = () => {
                 <option value="electric">Electric</option>
               </Select>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Mileage (km)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Mileage (km) <span className="text-danger">*</span></label>
               <Input type="number" value={mileage} onChange={(e) => setMileage(Number(e.target.value))} required />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Status <span className="text-danger">*</span></label>
               <Select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="available">Available</option>
-                <option value="in-transit">In-Transit</option>
+                <option value="in-transit">In Transit</option>
                 <option value="maintenance">Maintenance</option>
               </Select>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Insurance Expiry</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Insurance Expiry <span className="text-danger">*</span></label>
               <Input type="date" value={insuranceExpiry} onChange={(e) => setInsuranceExpiry(e.target.value)} required />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Fitness Expiry</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Fitness Expiry <span className="text-danger">*</span></label>
               <Input type="date" value={fitnessExpiry} onChange={(e) => setFitnessExpiry(e.target.value)} required />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Permit Expiry</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Permit Expiry <span className="text-danger">*</span></label>
               <Input type="date" value={permitExpiry} onChange={(e) => setPermitExpiry(e.target.value)} required />
             </div>
           </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Assign Driver</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-secondary">Assign Driver</label>
             <Select value={assignedDriver} onChange={(e) => setAssignedDriver(e.target.value)}>
               <option value="">No Driver Assigned</option>
               {drivers.map((d) => (
@@ -318,7 +328,7 @@ const Vehicles: React.FC = () => {
               ))}
             </Select>
           </div>
-          <Button type="submit" className="w-full mt-4">Save Vehicle Info</Button>
+          <Button type="submit" className="w-full mt-4 h-11">Save Vehicle Info</Button>
         </form>
       </Dialog>
     </div>

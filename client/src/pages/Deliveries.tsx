@@ -4,7 +4,7 @@ import api from '@/utils/api';
 import useAuth from '@/hooks/useAuth';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
-import Badge from '@/components/ui/badge';
+import StatusBadge from '@/components/ui/StatusBadge';
 import Table from '@/components/ui/table';
 import Dialog from '@/components/ui/dialog';
 import Select from '@/components/ui/select';
@@ -97,7 +97,7 @@ const Deliveries: React.FC = () => {
       await api.post('/deliveries', payload);
       setIsAddModalOpen(false);
       fetchDeliveriesAndTrips();
-    } catch (err) {
+    } catch {
       alert('Error creating delivery order.');
     }
   };
@@ -115,7 +115,7 @@ const Deliveries: React.FC = () => {
       await api.patch(`/deliveries/${selectedId}/status`, payload);
       setIsPoDModalOpen(false);
       fetchDeliveriesAndTrips();
-    } catch (err) {
+    } catch {
       alert('Failed to log Proof of Delivery.');
     }
   };
@@ -124,7 +124,7 @@ const Deliveries: React.FC = () => {
     try {
       await api.patch(`/deliveries/${id}/status`, { status: 'dispatched' });
       fetchDeliveriesAndTrips();
-    } catch (err) {
+    } catch {
       alert('Failed to dispatch order.');
     }
   };
@@ -132,18 +132,15 @@ const Deliveries: React.FC = () => {
   const isExchangingAllowed = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
   return (
-    <div className="space-y-6">
-      {/* Filtering and Actions Headers */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-40 h-9 text-xs">
-          <option value="">All Orders</option>
-          <option value="pending">Pending</option>
-          <option value="dispatched">Dispatched</option>
-          <option value="out-for-delivery">Out-For-Delivery</option>
-          <option value="delivered">Delivered</option>
-          <option value="failed">Failed</option>
-        </Select>
-
+    <div className="flex flex-col gap-5">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="font-display font-bold text-3xl text-text-primary">Deliveries</h1>
+          <span className="bg-primary-muted text-primary text-xs font-bold px-2.5 py-1 rounded-full font-mono">
+            {deliveries.length}
+          </span>
+        </div>
         {isExchangingAllowed && (
           <Button onClick={openAddModal} className="h-9 gap-1.5 text-xs">
             <Plus className="h-4 w-4" /> Create Delivery Order
@@ -151,114 +148,122 @@ const Deliveries: React.FC = () => {
         )}
       </div>
 
-      {loading ? (
-        <div className="flex h-48 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+      {/* Table Wrapper Card with filter bar */}
+      <div className="bg-surface border border-border rounded-xl overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-elevated/20">
+          <div className="flex items-center gap-3">
+            <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-44 text-xs h-9">
+              <option value="">All Orders</option>
+              <option value="pending">Pending</option>
+              <option value="dispatched">Dispatched</option>
+              <option value="out-for-delivery">Out for Delivery</option>
+              <option value="delivered">Delivered</option>
+              <option value="failed">Failed</option>
+            </Select>
+          </div>
         </div>
-      ) : (
-        <Table>
-          <Table.Header>
-            <Table.Row>
-              <Table.Head>Order Code</Table.Head>
-              <Table.Head>Consignee details</Table.Head>
-              <Table.Head>Delivery Window</Table.Head>
-              <Table.Head>Priority</Table.Head>
-              <Table.Head>Linked Trip</Table.Head>
-              <Table.Head>Status</Table.Head>
-              <Table.Head className="text-right">Fulfillment</Table.Head>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {deliveries.map((d) => (
-              <Table.Row key={d._id}>
-                <Table.Cell className="font-bold text-gray-900 dark:text-white">{d.deliveryNumber}</Table.Cell>
-                <Table.Cell>
-                  <p className="font-bold text-gray-800 dark:text-gray-200 m-0">{d.consignee.name}</p>
-                  <p className="text-[10px] text-gray-400 font-bold mt-0.5">{d.consignee.address}</p>
-                </Table.Cell>
-                <Table.Cell className="text-xs font-semibold">
-                  {new Date(d.scheduledDate).toLocaleDateString()} ({d.deliverySlot})
-                </Table.Cell>
-                <Table.Cell>
-                  <Badge variant={d.priority === 'urgent' ? 'destructive' : d.priority === 'high' ? 'warning' : 'secondary'}>
-                    {d.priority}
-                  </Badge>
-                </Table.Cell>
-                <Table.Cell className="font-semibold text-xs tracking-wide">{d.trip?.tripNumber || 'N/A'}</Table.Cell>
-                <Table.Cell>
-                  <Badge variant={d.status === 'delivered' ? 'success' : d.status === 'failed' ? 'destructive' : d.status === 'pending' ? 'secondary' : 'default'}>
-                    {d.status}
-                  </Badge>
-                </Table.Cell>
-                <Table.Cell className="text-right">
-                  <div className="inline-flex gap-2">
-                    {d.status === 'pending' && (
-                      <Button variant="outline" size="sm" onClick={() => handleDispatch(d._id)} className="h-8 text-xs border-purple-500/10 text-purple-600 hover:bg-purple-500/5 dark:text-purple-400">
-                        Dispatch
-                      </Button>
-                    )}
-                    {d.status !== 'delivered' && d.status !== 'failed' && d.status !== 'pending' && (
-                      <Button variant="default" size="sm" onClick={() => openPoDModal(d._id, d.consignee.name)} className="h-8 text-xs gap-1">
-                        <PenTool className="h-3.5 w-3.5" /> PoD Verification
-                      </Button>
-                    )}
-                  </div>
-                </Table.Cell>
+
+        {loading ? (
+          <div className="flex h-48 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : (
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.Head>Order Code</Table.Head>
+                <Table.Head>Consignee Details</Table.Head>
+                <Table.Head>Delivery Window</Table.Head>
+                <Table.Head>Priority</Table.Head>
+                <Table.Head>Linked Trip</Table.Head>
+                <Table.Head>Status</Table.Head>
+                <Table.Head className="text-right">Fulfillment</Table.Head>
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
-      )}
+            </Table.Header>
+            <Table.Body>
+              {deliveries.map((d) => (
+                <Table.Row key={d._id}>
+                  <Table.Cell className="font-mono text-sm font-medium text-text-secondary">{d.deliveryNumber}</Table.Cell>
+                  <Table.Cell>
+                    <p className="font-bold text-text-primary m-0">{d.consignee.name}</p>
+                    <p className="text-[10px] text-text-secondary mt-0.5">{d.consignee.address}</p>
+                  </Table.Cell>
+                  <Table.Cell className="text-xs text-text-secondary font-semibold">
+                    {new Date(d.scheduledDate).toLocaleDateString()} ({d.deliverySlot})
+                  </Table.Cell>
+                  <Table.Cell>
+                    <StatusBadge status={d.priority} />
+                  </Table.Cell>
+                  <Table.Cell className="font-mono text-xs font-semibold text-text-secondary">{d.trip?.tripNumber || 'N/A'}</Table.Cell>
+                  <Table.Cell>
+                    <StatusBadge status={d.status} />
+                  </Table.Cell>
+                  <Table.Cell className="text-right">
+                    <div className="inline-flex gap-2">
+                      {d.status === 'pending' && (
+                        <Button variant="outline" size="sm" onClick={() => handleDispatch(d._id)} className="h-8 text-xs cursor-pointer">
+                          Dispatch
+                        </Button>
+                      )}
+                      {d.status !== 'delivered' && d.status !== 'failed' && d.status !== 'pending' && (
+                        <Button variant="default" size="sm" onClick={() => openPoDModal(d._id, d.consignee.name)} className="h-8 text-xs gap-1.5 cursor-pointer">
+                          <PenTool size={12} /> PoD Verification
+                        </Button>
+                      )}
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+        )}
+      </div>
 
       {/* Add Dialog Modal */}
       <Dialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Create Delivery Dispatch Order">
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Link to Active Trip / Route</label>
-              <Select value={trip} onChange={(e) => setTrip(e.target.value)} required>
-                <option value="">Select Linked Trip</option>
-                {trips.map((t) => (
-                  <option key={t._id} value={t._id}>{t.tripNumber}: {t.origin.address} &rarr; {t.destination.address}</option>
-                ))}
-              </Select>
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-secondary">Link to Active Trip / Route <span className="text-danger">*</span></label>
+            <Select value={trip} onChange={(e) => setTrip(e.target.value)} required>
+              <option value="">Select Linked Trip</option>
+              {trips.map((t) => (
+                <option key={t._id} value={t._id}>{t.tripNumber}: {t.origin.address} &rarr; {t.destination.address}</option>
+              ))}
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Consignee Name</label>
-              <Input value={consigneeName} onChange={(e) => setConsigneeName(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Consignee Name <span className="text-danger">*</span></label>
+              <Input value={consigneeName} onChange={(e) => setConsigneeName(e.target.value)} required placeholder="Client name" />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Consignee Phone</label>
-              <Input value={consigneePhone} onChange={(e) => setConsigneePhone(e.target.value)} required />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Consignee Email</label>
-              <Input type="email" value={consigneeEmail} onChange={(e) => setConsigneeEmail(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Consignee Phone <span className="text-danger">*</span></label>
+              <Input value={consigneePhone} onChange={(e) => setConsigneePhone(e.target.value)} required placeholder="Client phone" />
             </div>
           </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Delivery address</label>
-            <Input value={consigneeAddress} onChange={(e) => setConsigneeAddress(e.target.value)} required />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-secondary">Consignee Email <span className="text-danger">*</span></label>
+            <Input type="email" value={consigneeEmail} onChange={(e) => setConsigneeEmail(e.target.value)} required placeholder="client@corporate.com" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-secondary">Delivery Address <span className="text-danger">*</span></label>
+            <Input value={consigneeAddress} onChange={(e) => setConsigneeAddress(e.target.value)} required placeholder="Street address, City" />
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Scheduled Date</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Scheduled Date <span className="text-danger">*</span></label>
               <Input type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} required />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Delivery Slot</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Delivery Slot <span className="text-danger">*</span></label>
               <Select value={deliverySlot} onChange={(e) => setDeliverySlot(e.target.value)}>
                 <option value="Morning">Morning</option>
                 <option value="Afternoon">Afternoon</option>
                 <option value="Evening">Evening</option>
               </Select>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Priority</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Priority <span className="text-danger">*</span></label>
               <Select value={priority} onChange={(e) => setPriority(e.target.value)}>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -267,15 +272,15 @@ const Deliveries: React.FC = () => {
               </Select>
             </div>
           </div>
-          <Button type="submit" className="w-full mt-4">Generate Dispatch Order</Button>
+          <Button type="submit" className="w-full mt-4 h-11">Generate Dispatch Order</Button>
         </form>
       </Dialog>
 
       {/* PoD Fulfillment Modal */}
       <Dialog isOpen={isPoDModalOpen} onClose={() => setIsPoDModalOpen(false)} title="Fulfill Proof of Delivery (PoD)">
         <form onSubmit={handlePoDSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Fulfillment Status</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-secondary">Fulfillment Status <span className="text-danger">*</span></label>
             <Select value={podStatus} onChange={(e) => setPodStatus(e.target.value)}>
               <option value="delivered">Delivered Successfully</option>
               <option value="failed">Delivery Failed</option>
@@ -283,34 +288,40 @@ const Deliveries: React.FC = () => {
           </div>
 
           {podStatus === 'delivered' ? (
-            <div className="space-y-4 animate-fadeIn">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Recipient Name</label>
-                <Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} required />
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Recipient Name <span className="text-danger">*</span></label>
+                <Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} required placeholder="Who signed for it?" />
               </div>
-              <div className="flex items-center gap-2 py-2">
-                <input type="checkbox" id="sigCheck" checked={signatureObtained} onChange={(e) => setSignatureObtained(e.target.checked)} className="h-4.5 w-4.5 text-purple-600 rounded cursor-pointer" />
-                <label htmlFor="sigCheck" className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase cursor-pointer select-none">Collect Recipient Signature Verification</label>
+              <div className="flex items-center gap-2.5 py-2">
+                <input
+                  type="checkbox"
+                  id="sigCheck"
+                  checked={signatureObtained}
+                  onChange={(e) => setSignatureObtained(e.target.checked)}
+                  className="h-5 w-5 text-primary border-border bg-elevated rounded cursor-pointer transition-colors"
+                />
+                <label htmlFor="sigCheck" className="text-sm font-semibold text-text-primary cursor-pointer select-none">Recipient Signature Verification Obtained</label>
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Notes / Remarks</label>
-                <Input value={podNotes} onChange={(e) => setPodNotes(e.target.value)} />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Notes / Remarks</label>
+                <Input value={podNotes} onChange={(e) => setPodNotes(e.target.value)} placeholder="e.g. Left with reception desk" />
               </div>
             </div>
           ) : (
-            <div className="space-y-4 animate-fadeIn">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Failure Reason / Remarks</label>
-                <Input value={failureReason} onChange={(e) => setFailureReason(e.target.value)} required />
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Failure Reason / Remarks <span className="text-danger">*</span></label>
+                <Input value={failureReason} onChange={(e) => setFailureReason(e.target.value)} required placeholder="e.g. Consignee closed" />
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Reschedule Date (Optional)</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Reschedule Date (Optional)</label>
                 <Input type="date" value={rescheduledDate} onChange={(e) => setRescheduledDate(e.target.value)} />
               </div>
             </div>
           )}
 
-          <Button type="submit" className="w-full mt-4">Commit PoD Records</Button>
+          <Button type="submit" className="w-full mt-4 h-11">Commit PoD Records</Button>
         </form>
       </Dialog>
     </div>

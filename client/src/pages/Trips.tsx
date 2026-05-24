@@ -4,7 +4,7 @@ import api from '@/utils/api';
 import useAuth from '@/hooks/useAuth';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
-import Badge from '@/components/ui/badge';
+import StatusBadge from '@/components/ui/StatusBadge';
 import Table from '@/components/ui/table';
 import Dialog from '@/components/ui/dialog';
 import Select from '@/components/ui/select';
@@ -96,7 +96,7 @@ const Trips: React.FC = () => {
       await api.post('/trips', payload);
       setIsModalOpen(false);
       fetchTripsData();
-    } catch (err) {
+    } catch {
       alert('Error creating trip schedules.');
     }
   };
@@ -113,7 +113,7 @@ const Trips: React.FC = () => {
     try {
       await api.patch(`/trips/${id}/status`, { status: nextStatus });
       fetchTripsData();
-    } catch (err) {
+    } catch {
       alert('Failed to update trip progression.');
     }
   };
@@ -121,93 +121,111 @@ const Trips: React.FC = () => {
   const isDispatcherOrAbove = currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'dispatcher';
 
   return (
-    <div className="space-y-6">
-      {/* Action and Filtering Headers */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-40 h-9 text-xs">
-          <option value="">All Journeys</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="loading">Loading</option>
-          <option value="in-transit">In-Transit</option>
-          <option value="delivered">Delivered</option>
-          <option value="completed">Completed</option>
-        </Select>
-
+    <div className="flex flex-col gap-5">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="font-display font-bold text-3xl text-text-primary">Trips</h1>
+          <span className="bg-primary-muted text-primary text-xs font-bold px-2.5 py-1 rounded-full font-mono">
+            {trips.length}
+          </span>
+        </div>
         {(currentUser?.role === 'admin' || currentUser?.role === 'manager') && (
           <Button onClick={openAddModal} className="h-9 gap-1.5 text-xs">
-            <Plus className="h-4 w-4" /> Schedule New Trip
+            <Plus className="h-4 w-4" /> Schedule Trip
           </Button>
         )}
       </div>
 
-      {loading ? (
-        <div className="flex h-48 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+      {/* Table Wrapper Card with filter bar */}
+      <div className="bg-surface border border-border rounded-xl overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-elevated/20">
+          <div className="flex items-center gap-3">
+            <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-44 text-xs h-9">
+              <option value="">All Journeys</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="loading">Loading</option>
+              <option value="in-transit">In Transit</option>
+              <option value="delivered">Delivered</option>
+              <option value="completed">Completed</option>
+            </Select>
+          </div>
         </div>
-      ) : (
-        <Table>
-          <Table.Header>
-            <Table.Row>
-              <Table.Head>Trip Number</Table.Head>
-              <Table.Head>Vehicle / Driver</Table.Head>
-              <Table.Head>Route Summary</Table.Head>
-              <Table.Head>Scheduled Offset</Table.Head>
-              <Table.Head>Cargo details</Table.Head>
-              <Table.Head>Status</Table.Head>
-              {isDispatcherOrAbove && <Table.Head className="text-right">Dispatch Control</Table.Head>}
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {trips.map((t) => (
-              <Table.Row key={t._id}>
-                <Table.Cell className="font-bold text-gray-900 dark:text-white">{t.tripNumber}</Table.Cell>
-                <Table.Cell>
-                  <p className="font-bold text-gray-800 dark:text-gray-200 m-0">{t.vehicle?.registrationNumber || 'N/A'}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold uppercase mt-0.5">{t.driver?.name || 'N/A'}</p>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex items-center gap-1 text-xs">
-                    <span className="font-semibold">{t.origin.address}</span>
-                    <ChevronRight className="h-3 w-3 text-gray-400" />
-                    <span className="font-semibold">{t.destination.address}</span>
-                  </div>
-                  <p className="text-[10px] text-gray-400 font-bold mt-0.5">Est. Distance: {t.distance} km</p>
-                </Table.Cell>
-                <Table.Cell className="text-xs">
-                  <p className="font-semibold">Dep: {new Date(t.scheduledDeparture).toLocaleString()}</p>
-                  <p className="text-gray-500 dark:text-gray-400 mt-0.5">Arr: {new Date(t.scheduledArrival).toLocaleString()}</p>
-                </Table.Cell>
-                <Table.Cell>
-                  <p className="text-xs font-bold text-gray-800 dark:text-gray-200 m-0">{t.cargo.description}</p>
-                  <p className="text-[10px] text-gray-400 font-bold mt-0.5">Payload: {t.cargo.weight} tons</p>
-                </Table.Cell>
-                <Table.Cell>
-                  <Badge variant={t.status === 'completed' ? 'success' : t.status === 'in-transit' ? 'default' : t.status === 'loading' ? 'warning' : 'secondary'}>
-                    {t.status}
-                  </Badge>
-                </Table.Cell>
-                {isDispatcherOrAbove && (
-                  <Table.Cell className="text-right">
-                    {t.status !== 'completed' && t.status !== 'cancelled' && (
-                      <Button variant="outline" size="sm" onClick={() => handleProgressStatus(t._id, t.status)} className="h-8 gap-1 border-purple-500/20 text-purple-600 hover:bg-purple-500/5 dark:text-purple-400">
-                        {t.status === 'scheduled' ? <Play className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                        <span className="capitalize">{t.status === 'scheduled' ? 'Start Loading' : t.status === 'loading' ? 'Dispatch' : t.status === 'in-transit' ? 'Delivered' : 'Complete'}</span>
-                      </Button>
-                    )}
-                  </Table.Cell>
-                )}
+
+        {loading ? (
+          <div className="flex h-48 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : (
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.Head>Trip Number</Table.Head>
+                <Table.Head>Vehicle / Driver</Table.Head>
+                <Table.Head>Route Summary</Table.Head>
+                <Table.Head>Scheduled Offset</Table.Head>
+                <Table.Head>Cargo Details</Table.Head>
+                <Table.Head>Status</Table.Head>
+                {isDispatcherOrAbove && <Table.Head className="text-right">Dispatch Control</Table.Head>}
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
-      )}
+            </Table.Header>
+            <Table.Body>
+              {trips.map((t) => (
+                <Table.Row key={t._id}>
+                  <Table.Cell className="font-mono text-sm font-medium text-text-secondary">{t.tripNumber}</Table.Cell>
+                  <Table.Cell>
+                    <p className="font-mono text-sm font-semibold text-text-primary m-0">{t.vehicle?.registrationNumber || 'N/A'}</p>
+                    <p className="text-[10px] text-text-secondary font-semibold uppercase mt-0.5">{t.driver?.name || 'N/A'}</p>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div className="flex items-center gap-1 text-xs text-text-primary font-medium">
+                      <span>{t.origin.address}</span>
+                      <ChevronRight size={12} className="text-text-tertiary" />
+                      <span>{t.destination.address}</span>
+                    </div>
+                    <p className="text-[10px] text-text-tertiary font-bold mt-0.5">Distance: {t.distance} km</p>
+                  </Table.Cell>
+                  <Table.Cell className="text-xs text-text-secondary">
+                    <p className="font-semibold text-text-primary">Dep: {new Date(t.scheduledDeparture).toLocaleString()}</p>
+                    <p className="mt-0.5">Arr: {new Date(t.scheduledArrival).toLocaleString()}</p>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <p className="text-xs font-bold text-text-primary m-0">{t.cargo.description}</p>
+                    <p className="text-[10px] text-text-secondary font-bold mt-0.5">Payload: {t.cargo.weight} tons</p>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <StatusBadge status={t.status} />
+                  </Table.Cell>
+                  {isDispatcherOrAbove && (
+                    <Table.Cell className="text-right">
+                      {t.status !== 'completed' && t.status !== 'cancelled' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleProgressStatus(t._id, t.status)}
+                          className="h-8 gap-1.5 text-xs cursor-pointer"
+                        >
+                          {t.status === 'scheduled' ? <Play size={12} /> : <CheckCircle2 size={12} />}
+                          <span className="capitalize">
+                            {t.status === 'scheduled' ? 'Start Loading' : t.status === 'loading' ? 'Dispatch' : t.status === 'in-transit' ? 'Delivered' : 'Complete'}
+                          </span>
+                        </Button>
+                      )}
+                    </Table.Cell>
+                  )}
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+        )}
+      </div>
 
       {/* Add Dialog Modal */}
       <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Schedule New Logistical Journey">
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Select Available Vehicle</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Select Available Vehicle <span className="text-danger">*</span></label>
               <Select value={vehicle} onChange={(e) => setVehicle(e.target.value)} required>
                 <option value="">Choose Vehicle</option>
                 {vehicles.map((v) => (
@@ -215,8 +233,8 @@ const Trips: React.FC = () => {
                 ))}
               </Select>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Select Available Driver</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Select Available Driver <span className="text-danger">*</span></label>
               <Select value={driver} onChange={(e) => setDriver(e.target.value)} required>
                 <option value="">Choose Driver</option>
                 {drivers.map((d) => (
@@ -226,54 +244,54 @@ const Trips: React.FC = () => {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Origin Depot</label>
-              <Input value={originAddress} onChange={(e) => setOriginAddress(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Origin Depot <span className="text-danger">*</span></label>
+              <Input value={originAddress} onChange={(e) => setOriginAddress(e.target.value)} required placeholder="Origin address" />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Destination address</label>
-              <Input value={destAddress} onChange={(e) => setDestAddress(e.target.value)} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Destination Address <span className="text-danger">*</span></label>
+              <Input value={destAddress} onChange={(e) => setDestAddress(e.target.value)} required placeholder="Destination address" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Departure Offset</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Departure Offset <span className="text-danger">*</span></label>
               <Input type="datetime-local" value={scheduledDeparture} onChange={(e) => setScheduledDeparture(e.target.value)} required />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Arrival Offset</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Arrival Offset <span className="text-danger">*</span></label>
               <Input type="datetime-local" value={scheduledArrival} onChange={(e) => setScheduledArrival(e.target.value)} required />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Est. Distance (km)</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">Est. Distance (km) <span className="text-danger">*</span></label>
               <Input type="number" value={distance} onChange={(e) => setDistance(Number(e.target.value))} required />
             </div>
           </div>
           {/* Cargo particulars */}
-          <div className="border-t border-gray-200/50 pt-3 dark:border-gray-800/50">
-            <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">Cargo Particulars</h4>
+          <div className="border-t border-border pt-3">
+            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Cargo Particulars</h4>
             <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Cargo description</label>
-                <Input value={cargoDesc} onChange={(e) => setCargoDesc(e.target.value)} required />
+              <div className="col-span-2 flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Cargo Description <span className="text-danger">*</span></label>
+                <Input value={cargoDesc} onChange={(e) => setCargoDesc(e.target.value)} required placeholder="e.g. Steel Sheets" />
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Payload (tons)</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Payload (tons) <span className="text-danger">*</span></label>
                 <Input type="number" value={cargoWeight} onChange={(e) => setCargoWeight(Number(e.target.value))} required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mt-2">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Valuation ($)</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Valuation ($) <span className="text-danger">*</span></label>
                 <Input type="number" value={cargoVal} onChange={(e) => setCargoVal(Number(e.target.value))} required />
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Special Instructions</label>
-                <Input value={cargoInstructions} onChange={(e) => setCargoInstructions(e.target.value)} />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-text-secondary">Special Instructions</label>
+                <Input value={cargoInstructions} onChange={(e) => setCargoInstructions(e.target.value)} placeholder="Fragile, rush delivery" />
               </div>
             </div>
           </div>
-          <Button type="submit" className="w-full mt-4">Generate Journey & Schedule</Button>
+          <Button type="submit" className="w-full mt-4 h-11">Generate Journey & Schedule</Button>
         </form>
       </Dialog>
     </div>
