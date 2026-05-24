@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck } from 'lucide-react';
+import { Truck, Eye, EyeOff } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 
 const Login: React.FC = () => {
@@ -9,6 +9,7 @@ const Login: React.FC = () => {
 
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
 
@@ -24,7 +25,7 @@ const Login: React.FC = () => {
 
     try {
       await login(email, password);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Invalid credentials.');
     } finally {
@@ -106,17 +107,26 @@ const Login: React.FC = () => {
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-text-secondary">Password</label>
-              <input
-                type="password"
-                required
-                className="w-full bg-elevated border border-border rounded-lg px-4 py-2.5
-                           text-base text-text-primary placeholder:text-text-tertiary
-                           focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20
-                           transition-all duration-150"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  className="w-full bg-elevated border border-border rounded-lg pl-4 pr-10 py-2.5
+                             text-base text-text-primary placeholder:text-text-tertiary
+                             focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20
+                             transition-all duration-150"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer flex items-center justify-center"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button
