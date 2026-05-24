@@ -511,74 +511,10 @@ Dashboard shows alerts for vehicles where:
 
 ---
 
-## 🚀 Deployment
-
-### Option A — Render (Backend) + Vercel (Frontend)
-
-**Backend on Render:**
-1. Push code to GitHub
-2. Go to [render.com](https://render.com) → New Web Service
-3. Connect your GitHub repo
-4. Set **Root Directory**: ` ` (leave blank — root)
-5. Set **Build Command**: `npm install`
-6. Set **Start Command**: `npm start`
-7. Add Environment Variables: `MONGO_URI`, `JWT_SECRET`, `NODE_ENV=production`
-
-**Frontend on Vercel:**
-1. Go to [vercel.com](https://vercel.com) → New Project
-2. Connect your GitHub repo
-3. Set **Root Directory**: `client`
-4. Set **Build Command**: `npm run build`
-5. Add Environment Variable: `REACT_APP_API_URL=https://your-render-url.onrender.com`
-
-### Option B — Railway (Full-Stack, Easiest)
-
-1. Go to [railway.app](https://railway.app) → New Project
-2. Deploy from GitHub repo
-3. Add a MongoDB plugin
-4. Set all environment variables from `.env.example`
-5. Railway auto-detects and runs `npm start`
-
----
-
-## 📝 Git Commit Strategy
-
-This project follows [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat:     New feature (e.g. feat: add vehicle status update endpoint)
-fix:      Bug fix (e.g. fix: driver not freed after trip completion)
-chore:    Setup/config (e.g. chore: add cors middleware)
-refactor: Code cleanup (e.g. refactor: extract trip status logic to controller)
-docs:     Documentation (e.g. docs: update README with API reference)
-style:    UI/CSS only (e.g. style: fix sidebar overflow on mobile)
-test:     Tests (e.g. test: add unit tests for trip model)
-```
-
-Example commit history:
-```
-feat: initialize MERN project structure and base config
-feat: add User model and JWT authentication routes
-feat: add Vehicle model with compliance tracking fields
-feat: add Driver model with license and status management
-feat: add Trip model with status workflow logic
-feat: add Delivery model with proof-of-delivery schema
-feat: implement dashboard aggregation endpoint
-feat: build React layout with sidebar and protected routes
-feat: add Vehicle management page with CRUD operations
-feat: add Driver management page with assignment workflow
-feat: add Trip management with status update pipeline
-feat: add Delivery management with consignee workflow
-feat: add dashboard KPI cards and fleet utilization chart
-chore: add seed script with sample data
-docs: complete README with setup, API reference, and deployment guide
-```
-
----
 
 ## 📸 Screenshots
 
-> _(Add screenshots of your running application here after setup)_
+> _![alt text](image.png)_
 
 | Page | Description |
 |------|-------------|
