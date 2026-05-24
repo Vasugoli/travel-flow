@@ -593,9 +593,9 @@ docs: complete README with setup, API reference, and deployment guide
 
 ## 👤 Author
 
-**[Your Name]**
-- GitHub: [@your-username](https://github.com/your-username)
-- Email: your.email@example.com
+**Vasugoli**
+- GitHub: [@Vasugoli](https://github.com/Vasugoli)
+- Email: golivasu7@gmail.com
 
 ---
 
