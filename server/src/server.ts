@@ -2,7 +2,15 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { connectDB } from './config/db';
+import { connectDB } from '@/config/db';
+
+// Route Imports
+import authRoutes from '@/routes/auth';
+import vehicleRoutes from '@/routes/vehicles';
+import driverRoutes from '@/routes/drivers';
+import tripRoutes from '@/routes/trips';
+import deliveryRoutes from '@/routes/deliveries';
+import dashboardRoutes from '@/routes/dashboard';
 
 dotenv.config();
 
@@ -22,7 +30,7 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-// Root / Health Check API
+// Health Check Endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -30,6 +38,14 @@ app.get('/api/health', (_req: Request, res: Response) => {
     timestamp: new Date(),
   });
 });
+
+// API Routes Mounting
+app.use('/api/auth', authRoutes);
+app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/drivers', driverRoutes);
+app.use('/api/trips', tripRoutes);
+app.use('/api/deliveries', deliveryRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Fallback Route Handler (404)
 app.use((_req: Request, res: Response) => {
